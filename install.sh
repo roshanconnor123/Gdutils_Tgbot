@@ -22,9 +22,9 @@ gdutils() {
   sudo apt-get install build-essential
   sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get install wget git curl tree unzip vim nano sudo
   sudo apt-get install nginx
-  curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo apt-get install npm && sudo apt-get install gcc g++ make
-  npm install dayjs --save  
+  curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo apt-get install npm && sudo apt-get install gcc g++ make 
   cd ~/Gdutils_Tgbot
+  npm install dayjs --save
   npm install --unsafe-perm=true --allow-root
   echo "${BLUE}Gdutils has been Installed succesfully${NORMAL}"
 }
@@ -32,9 +32,9 @@ gdutils() {
 sa() {
   cd ~
   echo "Downloading Service accounts from your private repo" 
-  echo "Provide github username"
+  echo "Please Provide Your github username"
   read username
-  echo "Provide github password"
+  echo "Please Provide Your github password"
   read Password
   cd ~
   git clone https://"$username":"$Password"@github.com/"$username"/accounts
