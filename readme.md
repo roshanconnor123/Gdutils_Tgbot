@@ -27,10 +27,10 @@ After adding your site to Cloudfare - We need to create a subdomain
 >Follow this - [Subdomain in Cloudfare](https://telegra.ph/Creating-a-Subdomain-in-Cloudfare-08-05)
 ##🔳 Installation
 ```
-git clone
+git clone https://github.com/roshanconnor123/Gdutils_Tgbot
 ```
 ```
-cd gd-utils && nano config.js
+cd Gdutils_Tgbot && nano config.js
 ```
 Scroll down and You will see the Option to add your Bot Token (Which you got from botfather) and your own Telegram Username (t.me/username)
 
@@ -46,7 +46,9 @@ You can see other values like Default Teamdrive ID,Client secret etc..Fill them 
 ```
 My Telegram username is `@roshanconnor` so it will be `tg_whitelist: ['roshanconnor']`
   
-After adding both the values..type `ctrl + o` and save it...and press `ctrl = x` and exit 
+Save the file you're editing by typing `CTRL+o` ("write out"). You will be prompted for the name of the file to save - Just Press `ENTER`
+
+When you're done, exit nano by typing `CTRL+x`
 
 When its done - type `sh install.sh`
 Follow the image below for better understanding now
