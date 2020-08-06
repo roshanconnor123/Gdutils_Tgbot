@@ -45,7 +45,7 @@ sa() {
 server() {
   echo "Make Sure that You added Bot Token and Telegram Username to config.js"
   cd ~/Gdutils_Tgbot
-  sudo npm install pm2@2.10.4 -g
+  sudo npm install pm2 -g
   sudo pm2 start server.js --node-args="--max-old-space-size=512"
   echo "${BLUE}Gdutils succesfully configured${NORMAL}"
 }
