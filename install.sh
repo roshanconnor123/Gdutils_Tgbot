@@ -61,13 +61,11 @@ nginx() {
 # ★★★Running the bot★★★ 
 bot() {
   cd /etc/nginx/sites-enabled/
-  echo "Please Provide your website address"
-  read -r website
-  echo "Please Provide your Bot Token"
-  read -r token
-  curl '"$website"/api/gdurl/count?fid=124pjM5LggSuwI1n40bcD5tQ13wS0M6wg'
-  curl -F "url='$website'/api/gdurl/tgbot" 'https://api.telegram.org/bot"$token"/setWebhook'
-  echo -e "${BLUE}Your Telegram Bot is Up and running..Type /help in Bot${NORMAL}"
+  read -p "Please Provide your website address: " website
+  read -p "Please Provide your Bot Token: " token
+  curl "${website}/api/gdurl/count\?fid=124pjM5LggSuwI1n40bcD5tQ13wS0M6wg"
+  curl -F "url=${website}/api/gdurl/tgbot" "https://api.telegram.org/bot${token}/setWebhook"
+  echo "${BLUE}Your Telegram Bot is Up and running..Type /help in Bot${NORMAL}"
 }
 
 # ★★★Installation★★★
