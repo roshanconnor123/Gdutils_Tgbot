@@ -1,0 +1,31 @@
+#!/usr/bin/env node
+
+const { argv } = require('yargs')
+  .usage('Usage: ./$0 <FolderID> [options]')
+  .example('./$0 1ULY8ISgWSOVc0UrzejykVgXfVL_I4r75', 'Obtain https://drive.google.com/drive/folders/1ULY8ISgWSOVc0UrzejykVgXfVL_I4r75 Statistics of all files included')
+  .example('./$0 root -s size -t html -o out.html', 'Obtain shared Folder statistics，The results are output in HTML form，Sort in reverse order according to total size，Save to the out.html file in this directory (new if not exists）')
+  .example('./$0 root -s name -t json -o out.json', 'Obtain shared Folder statistics，The result is output in JSON format，Sort by file extension，Save to the out.json file in this directory')
+  .example('./$0 root -t all -o all.json', 'Obtain shared Folder statistics，All file information (including folders) Output in JSON format，Save to all.json file in this directory')
+  .alias('u', 'update')
+  .describe('u', 'Obtain information online(Ignore whether there is a local cache)')
+  .alias('N', 'not_teamdrive')
+  .describe('N', 'If it is not a Teamdrive Link，This parameter can be added to improve interface query efficiency，Reduce latency。If you want to calculate size of the shared link and the service account in the ./sa directory does not have relevant permissions，Please make sure to add this parameter to use personal auth information for query')
+  .alias('S', 'service_account')
+  .describe('S', 'Specify to use service account for statistics，The premise is that the SA json file must be placed in the sa directory')
+  .alias('s', 'sort')
+  .describe('s', 'Statistical results sorting method，Optional name or size，If not filled, it will be arranged in reverse order according to the number of files')
+  .alias('t', 'type')
+  .describe('t', 'Statistical output type，Optional html/tree/json/all，all Means output all files json data，Best match -o Usage。If not filled, the command line form will be output by default')
+  .alias('o', 'output')
+  .describe('o', 'Statistics output file，Suitable for -t use')
+  .help('h')
+  .alias('h', 'help')
+
+const { count, validate_fid } = require('./src/gd')
+const [fid] = argv._
+if (validate_fid(fid)) {
+  const { update, sort, type, output, not_teamdrive, service_account } = argv
+  count({ fid, update, sort, type, output, not_teamdrive, service_account }).catch(console.error)
+} else {
+  console.warn('missing or wrong FolderID')
+}
