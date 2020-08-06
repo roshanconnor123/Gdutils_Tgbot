@@ -65,9 +65,8 @@ bot() {
   read website
   echo "Please Provide your Bot Token\n"
   read token
-  curl 'api/gdurl/count?fid=124pjM5LggSuwI1n40bcD5tQ13wS0M6wg'
-  curl '$website/api/gdurl/count?fid=124pjM5LggSuwI1n40bcD5tQ13wS0M6wg'
-  curl -F "url="$website"/api/gdurl/tgbot" 'https://api.telegram.org/bot"$token"/setWebhook'
+  curl '"$website"/api/gdurl/count?fid=124pjM5LggSuwI1n40bcD5tQ13wS0M6wg'
+  curl -F "url='$website'/api/gdurl/tgbot" 'https://api.telegram.org/bot"$token"/setWebhook'
   echo -e "${BLUE}Your Telegram Bot is Up and running..Type /help in Bot${NORMAL}"
 }
 
