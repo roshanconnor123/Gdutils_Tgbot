@@ -56,7 +56,7 @@ nginx() {
   sudo rm default
   sudo nginx -t
   sudo nginx -s reload
-  echo "${BLUE}Nginx Succesfully Configured${NORMAL}" &&
+  echo "${BLUE}Nginx Succesfully Configured${NORMAL}"
 }
 # ★★★Running the bot★★★ 
 bot() {
