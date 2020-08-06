@@ -32,9 +32,9 @@ gdutils() {
 sa() {
   cd ~
   echo "Downloading Service accounts from your private repo" 
-  echo "Provide github username\n"
+  echo "Provide github username"
   read username
-  echo "Provide github password\n"
+  echo "Provide github password"
   read Password
   cd ~
   git clone https://"$username":"$Password"@github.com/"$username"/accounts
