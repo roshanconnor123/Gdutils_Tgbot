@@ -26,7 +26,7 @@ gdutils() {
   npm install dayjs --save  
   cd ~/Gdutils_Tgbot
   npm install --unsafe-perm=true --allow-root
-  echo "${BLUE}Gdutils has been Installed succesfully${NORMAL}" && exit
+  echo "${BLUE}Gdutils has been Installed succesfully${NORMAL}"
 }
 # ★★★Downloading Service Accounts from github★★★
 sa() {
@@ -39,7 +39,7 @@ sa() {
   cd ~
   git clone https://"$username":"$Password"@github.com/"$username"/accounts
   cp accounts/*.json Gdutils_Tgbot/sa/
-  echo "${BLUE}Service accounts are added to Gdutils${NORMAL}" && exit
+  echo "${BLUE}Service accounts are added to Gdutils${NORMAL}"
 }  
 # ★★★Running Gdutils server★★★  
 server() {
@@ -47,7 +47,7 @@ server() {
   cd ~/Gdutils_Tgbot
   sudo npm i pm2 -g
   sudo pm2 start server.js --node-args="--max-old-space-size=512"
-  echo "${BLUE}Gdutils succesfully configured${NORMAL}" && exit
+  echo "${BLUE}Gdutils succesfully configured${NORMAL}"
 }
 # ★★★Configuring Nginx★★★
 nginx() {
@@ -56,17 +56,19 @@ nginx() {
   sudo rm default
   sudo nginx -t
   sudo nginx -s reload
-  echo "${BLUE}Nginx Succesfully Configured${NORMAL}" && exit
+  echo "${BLUE}Nginx Succesfully Configured${NORMAL}" &&
 }
 # ★★★Running the bot★★★ 
 bot() {
+  cd /etc/nginx/sites-enabled/
   echo "Please Provide your website address\n"
   read website
   echo "Please Provide your Bot Token\n"
   read token
+  curl 'api/gdurl/count?fid=124pjM5LggSuwI1n40bcD5tQ13wS0M6wg'
   curl '"$website"/api/gdurl/count?fid=124pjM5LggSuwI1n40bcD5tQ13wS0M6wg'
   curl -F "url="$website"/api/gdurl/tgbot" 'https://api.telegram.org/bot"$token"/setWebhook'
-  echo -e "${BLUE}Your Telegram Bot is Up and running..Type /help in Bot${NORMAL}" && exit
+  echo -e "${BLUE}Your Telegram Bot is Up and running..Type /help in Bot${NORMAL}"
 }
 
 # ★★★Installation★★★
@@ -115,4 +117,4 @@ case "$option" in
     echo
     echo " ${RED}Choose Correct Number from the Options${NORMAL}"
     ;;
-esac  
+esac
