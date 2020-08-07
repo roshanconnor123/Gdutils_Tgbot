@@ -8,7 +8,8 @@
  
 🌟 All I did is edit the code and used google translate to change chinese to English..so all Credits to the OP
 
-🌟 I had already Have a fork from [Iwestlins](https://github.com/iwestlin) original repo - But I added only installation and running part in own system
+🌟 I had already Have a fork from [Iwestlins](https://github.com/iwestlin) original repo - [Gd-utils running in own system](https://github.com/roshanconnor123/gd-utils)
+## Contributing
 
 🌟 This Part Includes Installation of Gdutils and running it using **Telegram Bot**
 ## General Instructions
@@ -25,11 +26,12 @@ Like Other Tools (Autorclone/Folderclone/Gclone/Fclone)  Gd-Utils is also based 
 
 3️⃣ You need a domain - Go to [Freenom](https://my.freenom.com/) and get yourself one for free ,After that add custom DNS by cloudfare
 >Follow this - [Domain with Freenom and Cloudfare](https://dev.to/hieplpvip/get-a-free-domain-with-freenom-and-cloudflare-k1j#:~:text=Step%201%3A%20Go%20to%20https%3A%2F%2Fwww.cloudflare.com,Free%20and%20click%20Confirm%20plan.)
+After adding your site to Cloudfare - We need to create a subdomain
+>Follow this - [Subdomain in Cloudfare](https://telegra.ph/Creating-a-Subdomain-in-Cloudfare-08-05)
 
 4️⃣ You need Bot Token - [Get it From Here](https://t.me/botfather)
 
-After adding your site to Cloudfare - We need to create a subdomain
->Follow this - [Subdomain in Cloudfare](https://telegra.ph/Creating-a-Subdomain-in-Cloudfare-08-05)
+
 ## 🔳 Installation
 ```
 git clone https://github.com/roshanconnor123/Gdutils_Tgbot
@@ -70,8 +72,6 @@ sh install.sh
 
 👏[Bilibox](https://github.com/Bilibox) - For helping with the Bash script
 
-PS: I didnt fork Original Dev's repo because I already have another forked one - [Gd-utils without Tg bot](https://github.com/roshanconnor123/gd-utils)
-## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 
