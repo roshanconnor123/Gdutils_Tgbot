@@ -8,8 +8,9 @@ const { GoogleToken } = require('gtoken')
 const handle_exit = require('signal-exit')
 const { argv } = require('yargs')
 
-let { PARALLEL_LIMIT } = require('../config')
+let { PARALLEL_LIMIT, EXCEED_LIMIT } = require('../config')
 PARALLEL_LIMIT = argv.l || argv.limit || PARALLEL_LIMIT
+EXCEED_LIMIT = EXCEED_LIMIT || 7
 
 const { AUTH, RETRY_LIMIT, TIMEOUT_BASE, TIMEOUT_MAX, LOG_DELAY, PAGE_SIZE, DEFAULT_TARGET } = require('../config')
 const { db } = require('../db')
@@ -47,7 +48,7 @@ if (is_pm2()) {
   setInterval(() => {
     SA_FILES.flag = 0
     SA_TOKENS = get_sa_batch()
-  }, 1000 * 3600 * 12)
+  }, 1000 * 3600 * 2)
 }
 
 // https://github.com/Leelow/is-pm2/blob/master/index.js
@@ -346,7 +347,7 @@ async function get_sa_token () {
       if (!SA_TOKENS.length) SA_TOKENS = get_sa_batch()
     }
   }
-  throw new Error('No SA account available')
+  throw new Error('No SA available')
 }
 
 async function real_get_sa_token (el) {
@@ -489,8 +490,6 @@ async function real_copy ({ source, target, name, min_size, update, dncnr, not_t
       let files = arr.filter(v => v.mimeType !== FOLDER_TYPE).filter(v => !copied_ids[v.id])
       if (min_size) files = files.filter(v => v.size >= min_size)
       const folders = arr.filter(v => v.mimeType === FOLDER_TYPE)
-      console.log('Number of Folders to be copied：', folders.length)
-      console.log('Number of Files to be copied：', files.length)
       const all_mapping = await create_folders({
         old_mapping,
         source,
@@ -558,7 +557,7 @@ async function copy_files ({ files, mapping, service_account, root, task_id }) {
 
   const loop = setInterval(() => {
     const now = dayjs().format('HH:mm:ss')
-    const message = `${now} | Number of files copied ${count} | Number of files Pending ${files.length}`
+    const message = `${now} | Number of Files copied ${count} | Ongoing ${concurrency} | Number of Files Left ${files.length}`
     print_progress(message)
   }, 1000)
 
@@ -631,7 +630,7 @@ async function copy_file (id, parent, use_sa, limit, task_id) {
     }
     try {
       const { data } = await axins.post(url, { parents: [parent] }, config)
-      gtoken.flaged = false
+      if (gtoken) gtoken.exceed_count = 0
       return data
     } catch (err) {
       retry++
@@ -644,13 +643,18 @@ async function copy_file (id, parent, use_sa, limit, task_id) {
         throw new Error(FILE_EXCEED_MSG)
       }
       if (use_sa && message && message.toLowerCase().includes('rate limit')) {
-        if (gtoken.flaged) {
+        retry--
+        if (gtoken.exceed_count >= EXCEED_LIMIT) {
           SA_TOKENS = SA_TOKENS.filter(v => v.gtoken !== gtoken)
           if (!SA_TOKENS.length) SA_TOKENS = get_sa_batch()
-          console.log('This account triggers the usage limit twice in a row, and the remaining SAs are：', SA_TOKENS.length)
+          console.log('This account has triggered the usage limit for ${EXCEED_LIMIT} consecutive times, and the remaining amount of SA available in this batch：', SA_TOKENS.length)
         } else {
-          console.log('This account triggers the usage limit and has been marked. If the next request is normal, it will be unmarked, otherwise the SA will be removed')
-          gtoken.flaged = true
+          // console.log('This account triggers the usage limit and has been marked. If the next request is normal, the mark will be removed, otherwise the SA will be removed')
+          gtoken.flaged = true	          if (gtoken.exceed_count) {
+            gtoken.exceed_count++
+          } else {
+            gtoken.exceed_count = 1
+          }
         }
       }
     }
@@ -838,6 +842,8 @@ async function dedupe ({ fid, update, service_account, yes }) {
 function handle_error (err) {
   const data = err && err.response && err.response.data
   if (data) {
+    const message = data.error && data.error.message
+    if (message && message.toLowerCase().includes('rate limit')) return
     console.error(JSON.stringify(data))
   } else {
     if (!err.message.includes('timeout')) console.error(err.message)
