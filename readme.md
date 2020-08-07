@@ -61,7 +61,7 @@ sh install.sh
 ```
 ![Gdutils](https://i.ibb.co/K9FJxJW/Screenshot-759.png)
 
-[Follow this Fron now onwards](https://telegra.ph/Gdutils-Tg-Bot-08-07)
+❄️ **[Follow this From now onwards](https://telegra.ph/Gdutils-Tg-Bot-08-07)**
 
 ## Usage
 🔷 Go to Bot and Type `/help`
