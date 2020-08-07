@@ -26,11 +26,11 @@ Like Other Tools (Autorclone/Folderclone/Gclone/Fclone)  Gd-Utils is also based 
 
 3️⃣ You need a domain - Go to [Freenom](https://my.freenom.com/) and get yourself one for free ,After that add custom DNS by cloudfare
 >Follow this - [Domain with Freenom and Cloudfare](https://dev.to/hieplpvip/get-a-free-domain-with-freenom-and-cloudflare-k1j#:~:text=Step%201%3A%20Go%20to%20https%3A%2F%2Fwww.cloudflare.com,Free%20and%20click%20Confirm%20plan.)
+
 After adding your site to Cloudfare - We need to create a subdomain
 >Follow this - [Subdomain in Cloudfare](https://telegra.ph/Creating-a-Subdomain-in-Cloudfare-08-05)
 
 4️⃣ You need Bot Token - [Get it From Here](https://t.me/botfather)
-
 
 ## 🔳 Installation
 ```
@@ -61,7 +61,7 @@ sh install.sh
 ```
 ![Gdutils](https://i.ibb.co/K9FJxJW/Screenshot-759.png)
 
-[Follow the images from now onwards](https://telegra.ph/Gdutils-Tg-Bot-08-07)
+[Follow this Fron now onwards](https://telegra.ph/Gdutils-Tg-Bot-08-07)
 
 ## Usage
 🔷 Go to Bot and Type `/help`
