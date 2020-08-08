@@ -650,7 +650,7 @@ async function copy_file (id, parent, use_sa, limit, task_id) {
           console.log('This account has triggered the usage limit for ${EXCEED_LIMIT} consecutive times, and the remaining amount of SA available in this batch：', SA_TOKENS.length)
         } else {
           // console.log('This account triggers the usage limit and has been marked. If the next request is normal, the mark will be removed, otherwise the SA will be removed')
-          gtoken.flaged = true	          if (gtoken.exceed_count) {
+          if (gtoken.exceed_count) {
             gtoken.exceed_count++
           } else {
             gtoken.exceed_count = 1
