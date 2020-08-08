@@ -19,7 +19,7 @@ Like Other Tools (Autorclone/Folderclone/Gclone/Fclone)  Gd-Utils is also based 
 >So for this tool to work you need SAs generated using [Autorclone](https://github.com/xyou365/AutoRclone) or [Folderclone](https://github.com/Spazzlo/folderclone)
 ### Pre Requisites:
 
-1️⃣ Need a **Linux** Server - Open Up HTTPS,HTTP as well Port 23333
+1️⃣ Need a **Linux** Server - Open Up **HTTPS**,**HTTP** as well Port **23333**  ([Follow this for understanding](https://www.solvps.com/blog/?p=471#:~:text=First%2C%20right%2Dclick%20%E2%80%9CInbound,(most%20applications%20use%20TCP).))
 
 2️⃣ You need Generated **SAs** - Create a new Repo in Github and name it as **accounts** and Upload all your `SAs` (json files) there
 >[You can Follow this Guide to understand better](https://telegra.ph/Uploading-Service-Accounts-to-Github-07-09)
