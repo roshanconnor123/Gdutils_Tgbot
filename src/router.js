@@ -94,42 +94,42 @@ router.post('/api/gdurl/tgbot', async ctx => {
   const fid = extract_fid(text) || extract_from_text(text)
   const no_fid_commands = ['/task', '/help', '/bm']
   if (!no_fid_commands.some(cmd => text.startsWith(cmd)) && !validate_fid(fid)) {
-    return sm({ chat_id, text: 'Shared ID not recognized' })
+    return sm({ chat_id, text: 'Drive ID Not Recognized' })
   }
   if (text.startsWith('/help')) return send_help(chat_id)
   if (text.startsWith('/bm')) {
     const [cmd, action, alias, target] = text.split(' ').map(v => v.trim())
     if (!action) return send_all_bookmarks(chat_id)
     if (action === 'set') {
-      if (!alias || !target) return sm({ chat_id, text: 'Alias and target ID cannot be empty' })
-      if (alias.length > 24) return sm({ chat_id, text: 'Alias should not exceed 24 English characters in length' })
-      if (!validate_fid(target)) return sm({ chat_id, text: 'Incorrect Destination ID format' })
+      if (!alias || !target) return sm({ chat_id, text: 'Alias And Target ID Cannot Be Empty' })
+      if (alias.length > 24) return sm({ chat_id, text: 'Alias Should Not Exceed 24 In Length' })
+      if (!validate_fid(target)) return sm({ chat_id, text: 'Incorrect DestinationID Format' })
       set_bookmark({ chat_id, alias, target })
     } else if (action === 'unset') {
-      if (!alias) return sm({ chat_id, text: 'Alias cannot be empty' })
+      if (!alias) return sm({ chat_id, text: 'Alias Cannot Be Empty' })
       unset_bookmark({ chat_id, alias })
     } else {
       send_bm_help(chat_id)
     }
   } else if (text.startsWith('/count')) {
-    if (counting[fid]) return sm({ chat_id, text: fid + ' Counting, please wait a moment' })
+    if (counting[fid]) return sm({ chat_id, text: fid + ' Counting, Please Wait A Moment' })
     try {
       counting[fid] = true
       const update = text.endsWith(' -u')
       await send_count({ fid, chat_id, update })
     } catch (err) {
       console.error(err)
-      sm({ chat_id, text: fid + ' Stats failed：' + err.message })
+      sm({ chat_id, text: fid + `Stats Failed： ` + err.message })
     } finally {
       delete counting[fid]
     }
   } else if (text.startsWith('/copy')) {
     let target = text.replace('/copy', '').replace(' -u', '').trim().split(' ').map(v => v.trim())[1]
     target = get_target_by_alias(target) || target
-    if (target && !validate_fid(target)) return sm({ chat_id, text: `Target ID ${target} is not in the correct format` })
+    if (target && !validate_fid(target)) return sm({ chat_id, text: `Target ID: ${target}\n Is Not In The Correct Format` })
     const update = text.endsWith(' -u')
     tg_copy({ fid, target, chat_id, update }).then(task_id => {
-      task_id && sm({ chat_id, text: `Start copying, task ID: ${task_id} can enter /task ${task_id} to show the progress` })
+      task_id && sm({ chat_id, text: `Copy Started For Task ID: ${task_id}\nEnter /task ${task_id} To Check The Progress` })
     })
   } else if (text.startsWith('/task')) {
     let task_id = text.replace('/task', '').trim()

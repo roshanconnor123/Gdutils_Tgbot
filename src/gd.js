@@ -17,7 +17,7 @@ const { db } = require('../db')
 const { make_table, make_tg_table, make_html, summary } = require('./summary')
 const { gen_tree_html } = require('./tree')
 
-const FILE_EXCEED_MSG = 'The number of files on your team disk has exceeded the limit (400,000)，Stop copying。.Please move the folder that has not been copied (or any of its subfolders) to another (sa also has permissions) team drive, and then execute the copy command again to follow the progress and continue to copy)'
+const FILE_EXCEED_MSG = 'The Number Of Files On Your Team Disk Has Exceeded The Limit (400,000)，Stopped Copying。.Please move the folder that has not been copied (or any of its subfolders) to another team drive, and then execute the copy command again to follow the progress and continue to copy)'
 const FOLDER_TYPE = 'application/vnd.google-apps.folder'
 const sleep = ms => new Promise((resolve, reject) => setTimeout(resolve, ms))
 
