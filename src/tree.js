@@ -39,7 +39,7 @@ function gen_tree_data (data, is_folder) {
   const files = data.filter(v => !is_folder(v))
   const total_size = sum(files.map(v => v.size))
   const root = {
-    title: `/Root Folder [Totl ${files.length} Files（Does not include folders）, ${format_size(total_size)}]`,
+    title: `/Root Folder [Total${files.length} Files (excluding folders) , ${format_size(total_size)}]`,
     key: data[0].parent
   }
   if (!folders.length) return [root]
@@ -51,9 +51,9 @@ function gen_tree_data (data, is_folder) {
   sort_folders(folders, 'count')
   sort_folders(sub_folders, 'count')
   folders.forEach(v => {
-    let {name, size, count, id} = v
+    let { name, size, count, id } = v
     if (name.length > 50) name = name.slice(0, 48) + '...'
-    v.title = `${name} | [Total ${count} Files ${format_size(size)}]`
+    v.title = `${name} | [Total${count}Files ${format_size(size)}]`
   })
   root.children = sub_folders.map(v => gen_node(v, folders))
   return [root]
@@ -66,7 +66,7 @@ function sort_folders (folders, type) {
 }
 
 function gen_node (v, folders) {
-  const {id, title, node} = v
+  const { id, title, node } = v
   if (node) return node
   return v.node = {
     title,
