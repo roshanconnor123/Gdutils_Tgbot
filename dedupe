@@ -3,11 +3,11 @@
 const { argv } = require('yargs')
   .usage('Usage: ./$0 <folder-id> [options]')
   .alias('y', 'yes')
-  .describe('yes', 'If duplicates are found，Delete without asking')
+  .describe('yes', 'If duplicate items are found, delete them without asking')
   .alias('u', 'update')
-  .describe('u', 'Do not use local cache，Obtain source folder information online')
+  .describe('u', 'Do not use local cache, force to obtain source folder information online')
   .alias('S', 'service_account')
-  .describe('S', 'Use service account to operate，The premise is that the sa authorization json file must be placed in the ./sa directory')
+  .describe('S', 'Use service account to operate, provided that the sa authorized json file must be placed in the ./sa directory')
   .help('h')
   .alias('h', 'help')
 
@@ -19,8 +19,8 @@ if (validate_fid(fid)) {
   dedupe({ fid, update, service_account, yes }).then(info => {
     if (!info) return
     const { file_count, folder_count } = info
-    console.log('Succesfully Deleted，Total deleted files：', file_count, 'Number of Folders：', folder_count)
+    console.log('The task is completed, the total number of deleted files：', file_count, 'Number of Folders：', folder_count)
   })
 } else {
-  console.warn('FolderID is Wrong')
+  console.warn('FolderID is wrong or invalid')
 }
