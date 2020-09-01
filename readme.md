@@ -25,7 +25,7 @@ Like Other Tools (Autorclone/Folderclone/Gclone/Fclone)  Gd-Utils is also based 
 
 3️⃣ You need a domain - Go to [Freenom](https://my.freenom.com/) and get yourself one for free ,After that add custom DNS by cloudfare
 
-🚩 Remember, In cloudfare Change security of the website from Strcit to Moderate
+🚩 Remember, In cloudfare Change security of the website from Strict to Moderate
 
 >Follow this - [Domain with Freenom and Cloudfare](https://dev.to/hieplpvip/get-a-free-domain-with-freenom-and-cloudflare-k1j#:~:text=Step%201%3A%20Go%20to%20https%3A%2F%2Fwww.cloudflare.com,Free%20and%20click%20Confirm%20plan.)
 
