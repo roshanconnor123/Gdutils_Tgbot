@@ -10,19 +10,19 @@ const ID_DIR_MAPPING = {}
 const FOLDER_TYPE = 'application/vnd.google-apps.folder'
 
 const { argv } = require('yargs')
-  .usage('用法: ./$0 <folder-id> [options]')
+  .usage('Usage: ./$0 <folder-id> [options]')
   .alias('o', 'output')
-  .describe('output', '指定输出文件，不填默认为uri.txt')
+  .describe('output', 'Specify Output File，Do not fill in the default url.txt')
   .alias('u', 'update')
-  .describe('u', '不使用本地缓存，强制从线上获取源文件夹信息')
+  .describe('u', 'Do not use local cache, force to obtain source folder information online')
   .alias('S', 'service_account')
-  .describe('S', '使用service account进行操作，前提是必须在 ./sa 目录下放置sa授权json文件')
+  .describe('S', 'Use service account to operate, provided that the sa authorized json file must be placed in the ./sa directory')
   .alias('k', 'hashkey')
-  .describe('k', '使用 https://github.com/iwestlin/gdshare 部署的网站所设置的hashkey，用于生成合法的下载链接')
+  .describe('k', 'Use the hashkey set by the website deployed at https://github.com/iwestlin/gdshare to generate a legal download link')
   .alias('c', 'cf')
-  .describe('cf', '使用 gdshare 部署的网站网址')
+  .describe('cf', 'Website URL deployed using gdshare')
   .alias('e', 'expire')
-  .describe('e', 'gdshare 直链过期时间，单位小时，默认值24')
+  .describe('e', 'gdshare direct link expiration time, unit hour, default value 24')
   .help('h')
   .alias('h', 'help')
 
@@ -32,12 +32,12 @@ if (validate_fid(fid)) {
   output = output || 'uri.txt'
   gen_input_file({ fid, update, service_account, output, hashkey, cf, expire })
     .then(cmd => {
-      console.log('已生成', output)
-      console.log('执行命令即可下载：\n', cmd)
+      console.log('Generated', output)
+      console.log('Execute the command to download：\n', cmd)
     })
     .catch(console.error)
 } else {
-  console.warn('目录ID缺失或格式错误')
+  console.warn('FolderID is wrong or invalid')
 }
 
 async function gen_input_file ({ fid, service_account, update, output, hashkey, cf, expire }) {
@@ -56,7 +56,7 @@ async function gen_input_file ({ fid, service_account, update, output, hashkey, 
     const { id, name, parent, size } = file
     const dir = get_dir(parent, folders)
     const download_uri = (hashkey && cf) ? gen_direct_link({ file, hashkey, cf, expire }) : `https://www.googleapis.com/drive/v3/files/${id}?alt=media`
-    return `# 文件大小：${format_size(size)}
+    return `# File Size：${format_size(size)}
 ${download_uri}
   dir=${root}${dir}
   out=${name}`
