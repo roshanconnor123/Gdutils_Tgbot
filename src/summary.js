@@ -5,7 +5,7 @@ const { escape } = require('html-escaper')
 module.exports = { make_table, summary, make_html, make_tg_table, format_size }
 
 function make_html ({ file_count, folder_count, total_size, details }) {
-  const head = ['Type', 'Quanity', 'Size']
+  const head = ['Type', 'Number', 'Size']
   const th = '<tr>' + head.map(k => `<th>${k}</th>`).join('') + '</tr>'
   const td = details.map(v => '<tr>' + [escape(v.ext), v.count, v.size].map(k => `<td>${k}</td>`).join('') + '</tr>').join('')
   let tail = ['Total', file_count + folder_count, total_size]
@@ -32,7 +32,7 @@ function make_table ({ file_count, folder_count, total_size, details }) {
   return tb.toString() + '\n'
 }
 
-function make_tg_table ({ file_count, folder_count, total_size, details }) {
+function make_tg_table ({ file_count, folder_count, total_size, details }, limit) {
   const tb = new Table({
     // chars: {
     //   'top': '═',
@@ -59,12 +59,15 @@ function make_tg_table ({ file_count, folder_count, total_size, details }) {
     if (v.ext === 'Folder') v.ext = '[Folder]'
     if (v.ext === 'No Extension') v.ext = '[NoExt]'
   })
-  const records = details.map(v => [v.ext, v.count, v.size]).map(arr => arr.map(content => ({ content, hAlign })))
+  let records = details.map(v => [v.ext, v.count, v.size]).map(arr => arr.map(content => ({ content, hAlign })))
+  const folder_row = records.pop()
+  if (limit) records = records.slice(0, limit)
+  records.push(folder_row)
   const total_count = file_count + folder_count
   const tails = ['Total', total_count, total_size].map(v => ({ content: v, hAlign }))
   tb.push(headers, ...records)
   tb.push(tails)
-  return tb.toString().replace(/─/g, '—') // Prevent the table from wrapping on the mobile phone and it will look more beautiful on the pc after removing the replace
+  return tb.toString().replace(/─/g, '—') // Prevent the table from breaking on the mobile phone and it will look more beautiful in pc after removing the replace
 }
 
 function summary (info, sort_by) {
@@ -80,7 +83,7 @@ function summary (info, sort_by) {
     let { name, size } = v
     size = Number(size) || 0
     const ext = name.split('.').pop().toLowerCase()
-    if (!name.includes('.') || ext.length > 10) { // If there are more than 10 characters after . it is judged as no extension
+    if (!name.includes('.') || ext.length > 10) { // If there are more than 10 characters after . , it is judged as no extension
       no_ext_size += size
       return no_ext++
     }
