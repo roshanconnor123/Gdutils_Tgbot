@@ -31,7 +31,7 @@ function send_help (chat_id) {
 <pre>/count FolderID [-u]</pre> <b>|</b> Calculates Size
 - adding <pre>-u</pre> at the end is optional <i>(info will be collected online)</i>
 ╾─────────────────────╼
-<pre>/copy sourceID DestID [-u]</pre> <b>|</b> Copy Files（Will create a New Folder）
+<pre>/copy sourceID DestID [-u]</pre> <b>|</b> Clone Files（Will create a New Folder）
 - If targetID is not filled in, it will be copied to the default location (set in <pre>config.js</pre>)
 - adding <pre>-u</pre> at the end is optional <i>(info will be collected online)</i>
 ╾─────────────────────╼
@@ -44,7 +44,7 @@ function send_help (chat_id) {
 <pre>/task rm [ID]</pre> <b>|</b> Delete Specific Task.
 ╾─────────────────────╼
 <pre>/bm [action] [alias] [target]</pre> <b>|</b> Add a common FolderID as Bookmark
-- <i>Helpful while copying to same destination folder multiple times</i>
+- <i>Helpful while cloning to same destination folder multiple times</i>
 ⁍ Example：
 <pre>/bm</pre> <b>|</b> Shows all bookmarks
 <pre>/bm set movie folder-id</pre> <b>|</b> Add a Bookmark by the name movie
@@ -55,7 +55,7 @@ function send_help (chat_id) {
 
 function send_bm_help (chat_id) {
   const text = `<pre>/bm [action] [alias] [target]</pre> <b>|</b> Add a common FolderID as Bookmark
-- <i>Helpful while copying to same destination folder multiple times</i>
+- <i>Helpful while cloning to same destination folder multiple times</i>
 ⁍ Example：
 <pre>/bm</pre> <b>|</b> Shows all bookmarks
 <pre>/bm set movie folder-id</pre> <b>|</b> Add a Bookmark by the name movie
@@ -133,7 +133,7 @@ function send_choice ({ fid, chat_id }) {
       inline_keyboard: [
         [
           { text: 'Calculate Size', callback_data: `count ${fid}` },
-          { text: 'Copy', callback_data: `copy ${fid}` }
+          { text: 'Clone', callback_data: `copy ${fid}` }
         ],
         [
           { text: 'Refresh', callback_data: `update ${fid}` },
@@ -146,7 +146,7 @@ function send_choice ({ fid, chat_id }) {
 
 // console.log(gen_bookmark_choices())
 function gen_bookmark_choices (fid) {
-  const gen_choice = v => ({ text: `Copy to ${v.alias}`, callback_data: `copy ${fid} ${v.alias}` })
+  const gen_choice = v => ({ text: `Clone to ${v.alias}`, callback_data: `Clone ${fid} ${v.alias}` })
   const records = db.prepare('select * from bookmark').all()
   const result = []
   for (let i = 0; i < records.length; i += 2) {
@@ -172,7 +172,7 @@ async function send_all_tasks (chat_id) {
   return axins.post(url, {
     chat_id,
     parse_mode: 'HTML',
-    text: `<b>All Copy Tasks</b>：\n<pre>${text}</pre>`
+    text: `<b>All Clone Tasks</b>：\n<pre>${text}</pre>`
   }).catch(err => {
     console.error(err.message)
     // const description = err.response && err.response.data && err.response.data.description
@@ -231,7 +231,7 @@ async function send_task_info ({ task_id, chat_id }) {
 
 async function tg_copy ({ fid, target, chat_id, update }) { // return task_id
   target = target || DEFAULT_TARGET
-  if (!target) return sm({ chat_id, text: 'Please enter the destination ID or set the default copy destination ID in config.js first(DEFAULT_TARGET)' })
+  if (!target) return sm({ chat_id, text: 'Please enter the destination ID or set the default clone destination ID in config.js first(DEFAULT_TARGET)' })
 
   const file = await get_info_by_id(fid, !USE_PERSONAL_AUTH)
   if (!file) {
@@ -242,7 +242,7 @@ async function tg_copy ({ fid, target, chat_id, update }) { // return task_id
     return copy_file(fid, target, !USE_PERSONAL_AUTH).then(data => {
       sm({ chat_id, parse_mode: 'HTML', text: `<b>File Copied Succesfully</b>： ${gen_link(target)}` })
     }).catch(e => {
-      sm({ chat_id, text: `<b>Failed To Copy The File</b>： <pre>${e.message}</pre>`, parse_mode: 'HTML' })
+      sm({ chat_id, text: `<b>Failed To Clone The File</b>： <pre>${e.message}</pre>`, parse_mode: 'HTML' })
     })
   }
 
@@ -251,7 +251,7 @@ async function tg_copy ({ fid, target, chat_id, update }) { // return task_id
     if (record.status === 'copying') {
       return sm({ chat_id, text: 'Task With The Same SourceID And DestinationID Is Already In Progress，\nType /task ' + record.id })
     } else if (record.status === 'finished') {
-      sm({ chat_id, text: `<b>Existing Task Detected</b> <pre>${record.id}</pre> ,Started Copying`, parse_mode: 'HTML' })
+      sm({ chat_id, text: `<b>Existing Task Detected</b> <pre>${record.id}</pre> ,Started Cloning`, parse_mode: 'HTML' })
     }
   }
 
@@ -307,7 +307,7 @@ ${processing_count ? ('Ongoing：' + processing_count) : ''}`
   const url = `https://api.telegram.org/bot${tg_token}/sendMessage`
   let response
   try {
-    response = await axins.post(url, { chat_id, text: `<b>Started</b>: <pre>${fid}</pre>.\nCollecting Files Stats,Please Wait.\nIt Is Recommended Not To Start Copying Before The Stats Is Collected.`, parse_mode: 'HTML' })
+    response = await axins.post(url, { chat_id, text: `<b>Started</b>: <pre>${fid}</pre>.\nCollecting Files Stats,Please Wait.\nIt Is Recommended Not To Start Cloning Before The Stats Is Collected.`, parse_mode: 'HTML' })
   } catch (e) {}
   const { data } = response || {}
   const message_id = data && data.result && data.result.message_id
@@ -341,7 +341,7 @@ ${processing_count ? ('Ongoing：' + processing_count) : ''}`
       parse_mode: 'HTML',
       text: `<b>Name</b>：${name}
 <b>Link</b>： <a href="${gd_link}">${fid}</a>
-<i>The Table Is Too Long, Only Showing The First ${limit}</b>
+<i>The Table Is Too Long, Only Showing The First ${limit}</i>
 <pre>${table}</pre>`
     })
   })

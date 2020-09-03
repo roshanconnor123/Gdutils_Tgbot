@@ -74,7 +74,7 @@ router.post('/api/gdurl/tgbot', async ctx => {
       if (COPYING_FIDS[fid + target]) return sm({ chat_id, text: 'Processing copy command with the same source and destination' })
       COPYING_FIDS[fid + target] = true
       tg_copy({ fid, target: get_target_by_alias(target), chat_id }).then(task_id => {
-        is_int(task_id) && sm({ chat_id, text: `Started Copying，TaskID: ${task_id} Type /task ${task_id} to know the Progress` })
+        is_int(task_id) && sm({ chat_id, text: `Clone Started For Task ID: ${task_id}\nType /task ${task_id} to check the progress` })
       }).finally(() => COPYING_FIDS[fid + target] = false)
     } else if (action === 'update') {
       if (counting[fid]) return sm({ chat_id, text: fid + ' Counting, please wait a moment' })
@@ -149,7 +149,7 @@ router.post('/api/gdurl/tgbot', async ctx => {
     COPYING_FIDS[fid + target] = true
     const update = text.endsWith(' -u')
     tg_copy({ fid, target, chat_id, update }).then(task_id => {
-      is_int(task_id) && sm({ chat_id, text: `Started Copying，TaskID: ${task_id} \nType /task ${task_id} To check the progress` })
+      is_int(task_id) && sm({ chat_id, text: `Clone Started For Task ID: ${task_id}\nType /task ${task_id} to check the progress` })
     }).finally(() => COPYING_FIDS[fid + target] = false)
   } else if (text.startsWith('/task')) {
     let task_id = text.replace('/task', '').trim()
