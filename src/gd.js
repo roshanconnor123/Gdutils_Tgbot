@@ -16,8 +16,9 @@ const { AUTH, RETRY_LIMIT, TIMEOUT_BASE, TIMEOUT_MAX, LOG_DELAY, PAGE_SIZE, DEFA
 const { db } = require('../db')
 const { make_table, make_tg_table, make_html, summary } = require('./summary')
 const { gen_tree_html } = require('./tree')
+const { snap2html } = require('./snap2html')
 
-const FILE_EXCEED_MSG = 'The Number Of Files On Your Team Disk Has Exceeded The Limit (400,000)，Stopped Copying。.Please move the folder that has not been copied (or any of its subfolders) to another team drive, and then execute the copy command again to follow the progress and continue to copy)'
+const FILE_EXCEED_MSG = 'The number of files on your team drive has exceeded the limit (400,000), Please move the folder that has not been copied to another team drive, and then run the copy command to resume the transfer'
 const FOLDER_TYPE = 'application/vnd.google-apps.folder'
 const sleep = ms => new Promise((resolve, reject) => setTimeout(resolve, ms))
 
@@ -30,7 +31,7 @@ if (proxy_url) {
   let ProxyAgent
   try {
     ProxyAgent = require('proxy-agent')
-  } catch (e) { // 没执行 npm i proxy-agent
+  } catch (e) { // run npm i proxy-agent
     ProxyAgent = require('https-proxy-agent')
   }
   axins = axios.create({ httpsAgent: new ProxyAgent(proxy_url) })
@@ -79,15 +80,13 @@ handle_exit(() => {
   db.close()
 })
 
-async function gen_count_body ({ fid, type, update, service_account }) {
+async function gen_count_body ({ fid, type, update, service_account, limit, tg }) {
   async function update_info () {
-    const info = await walk_and_save({ fid, update, service_account }) // This step has already stored the fid record in the database
-    const row = db.prepare('SELECT summary from gd WHERE fid=?').get(fid)
-    if (!row) return []
-    return [info, JSON.parse(row.summary)]
+    const info = await walk_and_save({ fid, update, service_account, tg })
+    return [info, summary(info)]
   }
 
-  function render_smy (smy, type) {
+  function render_smy (smy, type, unfinished_number) {
     if (!smy) return
     if (['html', 'curl', 'tg'].includes(type)) {
       smy = (typeof smy === 'object') ? smy : JSON.parse(smy)
@@ -96,22 +95,27 @@ async function gen_count_body ({ fid, type, update, service_account }) {
         curl: make_table,
         tg: make_tg_table
       }
-      return type_func[type](smy)
+      let result = type_func[type](smy, limit)
+      if (unfinished_number) result += `\nNumber of Folders not read：${unfinished_number}`
+      return result
     } else { // Default output json
       return (typeof smy === 'string') ? smy : JSON.stringify(smy)
     }
   }
   const file = await get_info_by_id(fid, service_account)
   if (file && file.mimeType !== FOLDER_TYPE) return render_smy(summary([file]), type)
-  
+
   let info, smy
   const record = db.prepare('SELECT * FROM gd WHERE fid = ?').get(fid)
+  if (!file && !record) {
+    throw new Error(`Unable to access the link, please check if the link is valid and SA has the appropriate permissions：https://drive.google.com/drive/folders/${fid}`)
+  }
   if (!record || update) {
     [info, smy] = await update_info()
   }
   if (type === 'all') {
     info = info || get_all_by_fid(fid)
-    if (!info) { // It means the last statistical process was interrupted
+    if (!info) { // Explain that the last statistical process was interrupted
       [info] = await update_info()
     }
     return info && JSON.stringify(info)
@@ -124,24 +128,41 @@ async function gen_count_body ({ fid, type, update, service_account }) {
   } else {
     [info, smy] = await update_info()
   }
-  return render_smy(smy, type)
+  return render_smy(smy, type, info.unfinished_number)
 }
 
 async function count ({ fid, update, sort, type, output, not_teamdrive, service_account }) {
   sort = (sort || '').toLowerCase()
   type = (type || '').toLowerCase()
   output = (output || '').toLowerCase()
+  let out_str
   if (!update) {
+    if (!type && !sort && !output) {
+      const record = db.prepare('SELECT * FROM gd WHERE fid = ?').get(fid)
+      const smy = record && record.summary && JSON.parse(record.summary)
+      if (smy) return console.log(make_table(smy))
+    }
     const info = get_all_by_fid(fid)
     if (info) {
-      console.log('Find local cache data, cache time：', dayjs(info.mtime).format('YYYY-MM-DD HH:mm:ss'))
-      const out_str = get_out_str({ info, type, sort })
+      console.log('cached data found in local database, cache time：', dayjs(info.mtime).format('YYYY-MM-DD HH:mm:ss'))
+      if (type === 'snap') {
+        const name = await get_name_by_id(fid, service_account)
+        out_str = snap2html({ root: { name, id: fid }, data: info })
+      } else {
+        out_str = get_out_str({ info, type, sort })
+      }
       if (output) return fs.writeFileSync(output, out_str)
       return console.log(out_str)
     }
   }
-  const result = await walk_and_save({ fid, not_teamdrive, update, service_account })
-  const out_str = get_out_str({ info: result, type, sort })
+  const with_modifiedTime = type === 'snap'
+  const result = await walk_and_save({ fid, not_teamdrive, update, service_account, with_modifiedTime })
+  if (type === 'snap') {
+    const name = await get_name_by_id(fid, service_account)
+    out_str = snap2html({ root: { name, id: fid }, data: result })
+  } else {
+    out_str = get_out_str({ info: result, type, sort })
+  }
   if (output) {
     fs.writeFileSync(output, out_str)
   } else {
@@ -182,7 +203,7 @@ function get_all_by_fid (fid) {
     if (!subf.length) return result
     const arr = subf.map(v => {
       const row = db.prepare('SELECT * FROM gd WHERE fid = ?').get(v)
-      if (!row) return null // If the corresponding fid record is not found, it means that the process was interrupted last time or the directory reading was not completed
+      if (!row) return null // If the corresponding fid record is not found, it means that the process was interrupted last time or the folder was not read completely
       let info = JSON.parse(row.info)
       info = info.map(vv => {
         vv.parent = v
@@ -197,33 +218,46 @@ function get_all_by_fid (fid) {
   }
 }
 
-async function walk_and_save ({ fid, not_teamdrive, update, service_account }) {
+async function walk_and_save ({ fid, not_teamdrive, update, service_account, with_modifiedTime, tg }) {
   let result = []
-  const not_finished = []
+  const unfinished_folders = []
   const limit = pLimit(PARALLEL_LIMIT)
+
+  if (update) {
+    const exists = db.prepare('SELECT fid FROM gd WHERE fid = ?').get(fid)
+    exists && db.prepare('UPDATE gd SET summary=? WHERE fid=?').run(null, fid)
+  }
 
   const loop = setInterval(() => {
     const now = dayjs().format('HH:mm:ss')
-    const message = `${now} | Copied ${result.length} | Ongoing ${limit.activeCount} /Pending ${limit.pendingCount}`
+    const message = `${now} | Copied ${result.length} | Ongoing ${limit.activeCount} | Pending ${limit.pendingCount}`
     print_progress(message)
   }, 1000)
+
+  const tg_loop = tg && setInterval(() => {
+    tg({
+      obj_count: result.length,
+      processing_count: limit.activeCount,
+      pending_count: limit.pendingCount
+    })
+  }, 10 * 1000)
 
   async function recur (parent) {
     let files, should_save
     if (update) {
-      files = await limit(() => ls_folder({ fid: parent, not_teamdrive, service_account }))
+      files = await limit(() => ls_folder({ fid: parent, not_teamdrive, service_account, with_modifiedTime }))
       should_save = true
     } else {
       const record = db.prepare('SELECT * FROM gd WHERE fid = ?').get(parent)
       if (record) {
         files = JSON.parse(record.info)
       } else {
-        files = await limit(() => ls_folder({ fid: parent, not_teamdrive, service_account }))
+        files = await limit(() => ls_folder({ fid: parent, not_teamdrive, service_account, with_modifiedTime }))
         should_save = true
       }
     }
     if (!files) return
-    if (files.not_finished) not_finished.push(parent)
+    if (files.unfinished) unfinished_folders.push(parent)
     should_save && save_files_to_db(parent, files)
     const folders = files.filter(v => v.mimeType === FOLDER_TYPE)
     files.forEach(v => v.parent = parent)
@@ -235,17 +269,26 @@ async function walk_and_save ({ fid, not_teamdrive, update, service_account }) {
   } catch (e) {
     console.error(e)
   }
-  console.log('\nProcess Complete')
-  not_finished.length ? console.log('Unread FolderID：', JSON.stringify(not_finished)) : console.log('All Folders are read')
+  console.log('\nInfo obtained')
+  unfinished_folders.length ? console.log('Unread FolderID：', JSON.stringify(unfinished_folders)) : console.log('All Folders have been read')
   clearInterval(loop)
-  const smy = summary(result)
-  db.prepare('UPDATE gd SET summary=?, mtime=? WHERE fid=?').run(JSON.stringify(smy), Date.now(), fid)
+  if (tg_loop) {
+    clearInterval(tg_loop)
+    tg({
+      obj_count: result.length,
+      processing_count: limit.activeCount,
+      pending_count: limit.pendingCount
+    })
+  }
+  const smy = unfinished_folders.length ? null : summary(result)
+  smy && db.prepare('UPDATE gd SET summary=?, mtime=? WHERE fid=?').run(JSON.stringify(smy), Date.now(), fid)
+  result.unfinished_number = unfinished_folders.length
   return result
 }
 
 function save_files_to_db (fid, files) {
-  // Do not save the directory where the request is not completed, then the next call to get_all_by_id will return null, so call walk_and_save again to try to complete the request for this directory
-  if (files.not_finished) return
+  // Do not save the folder where the request is not completed, then the next call to get_all_by_id will return null, so call walk_and_save again to try to complete the request for this folder
+  if (files.unfinished) return
   let subf = files.filter(v => v.mimeType === FOLDER_TYPE).map(v => v.id)
   subf = subf.length ? JSON.stringify(subf) : null
   const exists = db.prepare('SELECT fid FROM gd WHERE fid = ?').get(fid)
@@ -258,7 +301,7 @@ function save_files_to_db (fid, files) {
   }
 }
 
-async function ls_folder ({ fid, not_teamdrive, service_account }) {
+async function ls_folder ({ fid, not_teamdrive, service_account, with_modifiedTime }) {
   let files = []
   let pageToken
   const search_all = { includeItemsFromAllDrives: true, supportsAllDrives: true }
@@ -266,11 +309,14 @@ async function ls_folder ({ fid, not_teamdrive, service_account }) {
   params.q = `'${fid}' in parents and trashed = false`
   params.orderBy = 'folder,name desc'
   params.fields = 'nextPageToken, files(id, name, mimeType, size, md5Checksum)'
+  if (with_modifiedTime) {
+    params.fields = 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum)'
+  }
   params.pageSize = Math.min(PAGE_SIZE, 1000)
   // const use_sa = (fid !== 'root') && (service_account || !not_teamdrive) // Without parameters, use sa by default
   const use_sa = (fid !== 'root') && service_account
   // const headers = await gen_headers(use_sa)
-  // For Folders with a large number of subfolders（1ctMwpIaBg8S1lrZDxdynLXJpMsm5guAl），May not be finished，access_token expired
+  // For Folders with a large number of subfolders（1ctMwpIaBg8S1lrZDxdynLXJpMsm5guAl），The access_token may have expired before listing
   // Because nextPageToken is needed to get the data of the next page，So you cannot use parallel requests，The test found that each request to obtain 1000 files usually takes more than 20 seconds to complete
   const gtoken = use_sa && (await get_sa_token()).gtoken
   do {
@@ -293,8 +339,8 @@ async function ls_folder ({ fid, not_teamdrive, service_account }) {
       }
     }
     if (!data) {
-      console.error('Reading directory is not complete (partial reading), Parameters:', params)
-      files.not_finished = true
+      console.error('Folder is not read completely, Parameters:', params)
+      files.unfinished = true
       return files
     }
     files = files.concat(data.files)
@@ -334,7 +380,7 @@ async function get_access_token () {
   return data.access_token
 }
 
-// get_sa_token().catch(console.error)
+// get_sa_token().then(console.log).catch(console.error)
 async function get_sa_token () {
   if (!SA_TOKENS.length) SA_TOKENS = get_sa_batch()
   while (SA_TOKENS.length) {
@@ -399,19 +445,15 @@ async function create_folder (name, parent, use_sa, limit) {
         if (limit) limit.clearQueue()
         throw new Error(FILE_EXCEED_MSG)
       }
-      console.log('Retry Creating Folders：', name, 'Number of Retries：', retry)
+      console.log('Creating Folder and Retryinh：', name, 'No of reries：', retry)
     }
   }
-  throw new Error(err_message + 'Folder Name：' + name)
+  throw new Error(err_message + ' Folder Name：' + name)
 }
 
 async function get_name_by_id (fid, use_sa) {
-  try {
-    const { name } = await get_info_by_id(fid, use_sa)
-    return name
-  } catch (e) {
-    return fid
-  }
+  const info = await get_info_by_id(fid, use_sa)
+  return info ? info.name : fid
 }
 
 async function get_info_by_id (fid, use_sa) {
@@ -420,22 +462,31 @@ async function get_info_by_id (fid, use_sa) {
     includeItemsFromAllDrives: true,
     supportsAllDrives: true,
     corpora: 'allDrives',
-    fields: 'id, name, size, parents, mimeType'
+    fields: 'id, name, size, parents, mimeType, modifiedTime'
   }
   url += '?' + params_to_query(params)
-  const headers = await gen_headers(use_sa)
-  const { data } = await axins.get(url, { headers })
-  return data
+  let retry = 0
+  while (retry < RETRY_LIMIT) {
+    try {
+      const headers = await gen_headers(use_sa)
+      const { data } = await axins.get(url, { headers })
+      return data
+    } catch (e) {
+      retry++
+      handle_error(e)
+    }
+  }
+  // throw new Error('Unable to access this FolderID：' + fid)
 }
 
 async function user_choose () {
   const answer = await prompts({
     type: 'select',
     name: 'value',
-    message: 'What do you wish to do？',
+    message: 'Do you wish to resume？',
     choices: [
-      { title: 'Continue', description: 'Resume', value: 'continue' },
-      { title: 'Restart', description: 'Restart', value: 'restart' },
+      { title: 'Continue', description: 'Resume the transfer', value: 'continue' },
+      { title: 'Restart', description: 'Restart the process', value: 'restart' },
       { title: 'Exit', description: 'Exit', value: 'exit' }
     ],
     initial: 0
@@ -445,10 +496,16 @@ async function user_choose () {
 
 async function copy ({ source, target, name, min_size, update, not_teamdrive, service_account, dncnr, is_server }) {
   target = target || DEFAULT_TARGET
-  if (!target) throw new Error('Target location cannot be empty')
+  if (!target) throw new Error('Destination ID cannot be empty')
+
+  const file = await get_info_by_id(source, service_account)
+  if (!file) return console.error(`Unable to access the link, please check if the link is valid and SA has the appropriate permissions：https://drive.google.com/drive/folders/${source}`)
+  if (file && file.mimeType !== FOLDER_TYPE) {
+    return copy_file(source, target, service_account).catch(console.error)
+  }
 
   const record = db.prepare('select id, status from task where source=? and target=?').get(source, target)
-  if (record && record.status === 'copying') return console.log('A task with the same source and destination is already running, force quit')
+  if (record && record.status === 'copying') return console.log('This Task is already running. Force Quit')
 
   try {
     return await real_copy({ source, target, name, min_size, update, dncnr, not_teamdrive, service_account, is_server })
@@ -466,8 +523,9 @@ async function real_copy ({ source, target, name, min_size, update, dncnr, not_t
     if (name) {
       return create_folder(name, target, service_account)
     } else {
-      const source_info = await get_info_by_id(source, service_account)
-      return create_folder(source_info.name, target, service_account)
+      const file = await get_info_by_id(source, service_account)
+      if (!file) throw new Error(`Unable to access the link, please check if the link is valid and SA has the appropriate permissions：https://drive.google.com/drive/folders/${source}`)
+      return create_folder(file.name, target, service_account)
     }
   }
 
@@ -476,7 +534,7 @@ async function real_copy ({ source, target, name, min_size, update, dncnr, not_t
     const copied = db.prepare('select fileid from copied where taskid=?').all(record.id).map(v => v.fileid)
     const choice = (is_server || argv.yes) ? 'continue' : await user_choose()
     if (choice === 'exit') {
-      return console.log('Exitting')
+      return console.log('exit the program')
     } else if (choice === 'continue') {
       let { mapping } = record
       const old_mapping = {}
@@ -525,8 +583,8 @@ async function real_copy ({ source, target, name, min_size, update, dncnr, not_t
       db.prepare('update task set status=?, ftime=? where id=?').run('finished', Date.now(), record.id)
       return { id: new_root.id, task_id: record.id }
     } else {
-      // ctrl+c 退出
-      return console.log('Exitting')
+      // ctrl+c Exit
+      return console.log('Exit')
     }
   } else {
     const new_root = await get_new_root()
@@ -553,11 +611,11 @@ async function real_copy ({ source, target, name, min_size, update, dncnr, not_t
 
 async function copy_files ({ files, mapping, service_account, root, task_id }) {
   if (!files.length) return
-  console.log('\nStart copying files, Total：', files.length)
+  console.log('\nStarted copying files, total：', files.length)
 
   const loop = setInterval(() => {
     const now = dayjs().format('HH:mm:ss')
-    const message = `${now} | Number of Files copied ${count} | Ongoing ${concurrency} | Number of Files Left ${files.length}`
+    const message = `${now} | Number of files copied ${count} | ongoing ${concurrency} | Number of Files Pending ${files.length}`
     print_progress(message)
   }, 1000)
 
@@ -570,7 +628,7 @@ async function copy_files ({ files, mapping, service_account, root, task_id }) {
       files = null
       throw err
     }
-    if (concurrency > PARALLEL_LIMIT) {
+    if (concurrency >= PARALLEL_LIMIT) {
       await sleep(100)
       continue
     }
@@ -593,15 +651,17 @@ async function copy_files ({ files, mapping, service_account, root, task_id }) {
       concurrency--
     })
   } while (concurrency || files.length)
-  return clearInterval(loop)
+  clearInterval(loop)
+  if (err) throw err
   // const limit = pLimit(PARALLEL_LIMIT)
   // let count = 0
   // const loop = setInterval(() => {
   //   const now = dayjs().format('HH:mm:ss')
   //   const {activeCount, pendingCount} = limit
-  //   const message = `${now} | Number of files copied ${count} | Ongoing ${activeCount} / Pending ${pendingCount}`
+  //   const message = `${now} | Number of files copied ${count} | Ongoing ${activeCount} | Pending ${pendingCount}`
   //   print_progress(message)
   // }, 1000)
+  // May cause excessive memory usage and be forced to exit by node
   // return Promise.all(files.map(async file => {
   //   const { id, parent } = file
   //   const target = mapping[parent] || root
@@ -642,14 +702,17 @@ async function copy_file (id, parent, use_sa, limit, task_id) {
         if (task_id) db.prepare('update task set status=? where id=?').run('error', task_id)
         throw new Error(FILE_EXCEED_MSG)
       }
+      if (!use_sa && message && message.toLowerCase().includes('rate limit')) {
+        throw new Error('Personal Drive Limit：' + message)
+      }
       if (use_sa && message && message.toLowerCase().includes('rate limit')) {
         retry--
         if (gtoken.exceed_count >= EXCEED_LIMIT) {
           SA_TOKENS = SA_TOKENS.filter(v => v.gtoken !== gtoken)
           if (!SA_TOKENS.length) SA_TOKENS = get_sa_batch()
-          console.log('This account has triggered the usage limit for ${EXCEED_LIMIT} consecutive times, and the remaining amount of SA available in this batch：', SA_TOKENS.length)
+          console.log(`This account has triggered the daily usage limit${EXCEED_LIMIT} consecutive times, the remaining amount of SA available in this batch：`, SA_TOKENS.length)
         } else {
-          // console.log('This account triggers the usage limit and has been marked. If the next request is normal, the mark will be removed, otherwise the SA will be removed')
+          // console.log('This account triggers its daily usage limit and has been marked. If the next request is normal, it will be unmarked, otherwise the SA will be removed')
           if (gtoken.exceed_count) {
             gtoken.exceed_count++
           } else {
@@ -683,7 +746,7 @@ async function create_folders ({ source, old_mapping, folders, root, task_id, se
 
   const loop = setInterval(() => {
     const now = dayjs().format('HH:mm:ss')
-    const message = `${now} | Folder Created ${count} | Ongoing ${limit.activeCount} /Pending ${limit.pendingCount}`
+    const message = `${now} | Folders Created ${count} | Ongoing ${limit.activeCount} | Pending ${limit.pendingCount}`
     print_progress(message)
   }, 1000)
 
@@ -703,7 +766,7 @@ async function create_folders ({ source, old_mapping, folders, root, task_id, se
           clearInterval(loop)
           throw new Error(FILE_EXCEED_MSG)
         }
-        console.error('Error creating directory:', e.message)
+        console.error('Error creating Folder:', e.message)
       }
     }))
     // folders = folders.filter(v => !mapping[v.id])
@@ -739,7 +802,7 @@ function find_dupe (arr) {
   })
   for (const file of files) {
     const { md5Checksum, parent, name } = file
-    // Determine whether to repeat based on file location and md5 value
+    // Determining Duplicates based on file location and md5 value
     const key = parent + '|' + md5Checksum // + '|' + name
     if (exists[key]) {
       dupe_files.push(file)
@@ -752,10 +815,14 @@ function find_dupe (arr) {
 
 async function confirm_dedupe ({ file_number, folder_number }) {
   const answer = await prompts({
-    type: 'text',
+    type: 'select',
     name: 'value',
-    message: `Duplicate file detected ${file_number}，Duplicate empty Folders ${folder_number}，Delete them (yes/no) ？`,
-    validate: value => ['yes', 'no'].includes(value) ? true : 'must enter yes or no'
+    message: `Duplicate files detected ${file_number}，Empty Folders detected${folder_number}，Delete them？`,
+    choices: [
+      { title: 'Yes', description: 'confirm deletion', value: 'yes' },
+      { title: 'No', description: 'Donot delete', value: 'no' }
+    ],
+    initial: 0
   })
   return answer.value
 }
@@ -804,7 +871,7 @@ async function dedupe ({ fid, update, service_account, yes }) {
   if (!update) {
     const info = get_all_by_fid(fid)
     if (info) {
-      console.log('Find local cache data, cache time：', dayjs(info.mtime).format('YYYY-MM-DD HH:mm:ss'))
+      console.log('Locally cached data Found, cache time：', dayjs(info.mtime).format('YYYY-MM-DD HH:mm:ss'))
       arr = info
     }
   }
@@ -843,10 +910,10 @@ function handle_error (err) {
   const data = err && err.response && err.response.data
   if (data) {
     const message = data.error && data.error.message
-    if (message && message.toLowerCase().includes('rate limit')) return
+    if (message && message.toLowerCase().includes('rate limit') && !argv.verbose) return
     console.error(JSON.stringify(data))
   } else {
-    if (!err.message.includes('timeout')) console.error(err.message)
+    if (!err.message.includes('timeout') || argv.verbose) console.error(err.message)
   }
 }
 

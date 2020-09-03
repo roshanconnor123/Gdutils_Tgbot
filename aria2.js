@@ -10,13 +10,13 @@ const ID_DIR_MAPPING = {}
 const FOLDER_TYPE = 'application/vnd.google-apps.folder'
 
 const { argv } = require('yargs')
-  .usage('用法: ./$0 <folder-id> [options]')
+  .usage('Usage: ./$0 <folder-id> [options]')
   .alias('o', 'output')
-  .describe('output', 'Specify the output，The default is uri.txt')
+  .describe('output', 'Specify Output File，Do not fill in the default url.txt')
   .alias('u', 'update')
-  .describe('u', 'Do not use local cache，Force to obtain source folder information online')
+  .describe('u', 'Do not use local cache, force to obtain source folder information online')
   .alias('S', 'service_account')
-  .describe('S', 'Use service account to operate，The condition is that the sa authorized json file must be placed in the ./sa directory')
+  .describe('S', 'Use service account to operate, provided that the sa authorized json file must be placed in the ./sa directory')
   .alias('k', 'hashkey')
   .describe('k', 'Use the hashkey set by the website deployed at https://github.com/iwestlin/gdshare to generate a legal download link')
   .alias('c', 'cf')
@@ -32,7 +32,7 @@ if (validate_fid(fid)) {
   output = output || 'uri.txt'
   gen_input_file({ fid, update, service_account, output, hashkey, cf, expire })
     .then(cmd => {
-      console.log('已生成', output)
+      console.log('Generated', output)
       console.log('Execute the command to download：\n', cmd)
     })
     .catch(console.error)

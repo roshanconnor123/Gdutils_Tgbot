@@ -20,7 +20,7 @@ PURPLE="${COLOR}1;35m"
 gdutils() {
   cd ~
   sudo apt-get install build-essential
-  sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get install wget git curl tree unzip vim nano sudo
+  sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get install wget git curl nano sudo
   sudo apt-get install nginx
   curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo apt-get install npm && sudo apt-get install gcc g++ make 
   cd ~/Gdutils_Tgbot
