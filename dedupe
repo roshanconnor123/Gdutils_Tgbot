@@ -19,7 +19,7 @@ if (validate_fid(fid)) {
   dedupe({ fid, update, service_account, yes }).then(info => {
     if (!info) return
     const { file_count, folder_count } = info
-    console.log('The task is completed, the total number of deleted files：', file_count, 'Number of Folders：', folder_count)
+    console.log('Succesfully Deleted，Total Number Of Deleted Files：', file_count, 'Number of Folders：', folder_count)
   })
 } else {
   console.warn('FolderID is wrong or invalid')
