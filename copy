@@ -32,10 +32,10 @@ if (validate_fid(source)) {
   const { name, update, file, not_teamdrive, size, service_account, dncnr } = argv
   if (file) {
     target = target || DEFAULT_TARGET
-    if (!validate_fid(target)) throw new Error('target id Incorrect Format')
+    if (!validate_fid(target)) throw new Error('Drive ID is incorrect')
     return copy_file(source, target, service_account).then(r => {
       const link = 'https://drive.google.com/drive/folders/' + target
-      console.log('Task is completed，File Location：\n', link)
+      console.log('Clone is completed，File Location：\n', link)
     }).catch(console.error)
   }
   let min_size
@@ -46,7 +46,7 @@ if (validate_fid(source)) {
   copy({ source, target, name, min_size, update, not_teamdrive, service_account, dncnr }).then(folder => {
     if (!folder) return
     const link = 'https://drive.google.com/drive/folders/' + folder.id
-    console.log('\nTask Completed，Folder Link：\n', link)
+    console.log('\nClone Completed，Folder Link：\n', link)
   })
 } else {
   console.warn('FolderID is wrong or invalid')
