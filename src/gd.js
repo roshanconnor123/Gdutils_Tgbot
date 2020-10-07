@@ -445,7 +445,7 @@ async function create_folder (name, parent, use_sa, limit) {
         if (limit) limit.clearQueue()
         throw new Error(FILE_EXCEED_MSG)
       }
-      console.log('Creating Folder and Retryinh：', name, 'No of reries：', retry)
+      console.log('Creating Folder and Retrying：', name, 'No of retries：', retry)
     }
   }
   throw new Error(err_message + ' Folder Name：' + name)
