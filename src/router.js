@@ -102,7 +102,7 @@ router.post('/api/gdurl/tgbot', async ctx => {
     v = String(v).toLowerCase()
     return v === username || v === user_id
   })) {
-    chat_id && sm({ chat_id, text: 'You are not supposed to Message me you idiot, got back to the hole you came from' })
+    chat_id && sm({ chat_id, text: 'You are not supposed to Message me you idiot, go back to the hole you came from' })
     return console.warn('Received a request from a non-whitelisted user')
   }
 
