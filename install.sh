@@ -67,7 +67,7 @@ EOT
 # ★★★Running the bot★★★ 
 bot() {
   read -p "Please Provide your Bot Token: " token
-  curl "${website}/api/gdurl/count\?fid=124pjM5LggSuwI1n40bcD5tQ13wS0M6wg"
+  curl "${domain}/api/gdurl/count\?fid=124pjM5LggSuwI1n40bcD5tQ13wS0M6wg"
   curl -F "url=https://${domain}/api/gdurl/tgbot" "https://api.telegram.org/bot${token}/setWebhook"
   echo "${BLUE}Your Telegram Bot is Up and running..Type /help in Bot${NORMAL}"
 }
@@ -109,6 +109,7 @@ case "$option" in
     caddyf
     ;;
 6)
+    caddyf
     bot
     ;;
 69)
