@@ -52,7 +52,7 @@ server() {
   echo "${BLUE}Gdutils succesfully configured${NORMAL}"
 }
 # ★★★Configuring Caddy★★★
-caddy() {
+caddyf() {
   echo "Please Provider your website address ( Format - subdomain.domain.name , dont include https:// )"
   read domain
 cat <<EOT>> $HOME/Caddyfile
@@ -82,7 +82,7 @@ ${YELLOW}Individual Installation${NORMAL}
 2.${GREEN}Installation Of Gdutils${NORMAL}
 3.${GREEN}Downloading Service Accounts From Github${NORMAL}
 4.${GREEN}Running the Gdutils Server${NORMAL}
-5.${GREEN}Configuring Nginx${NORMAL}
+5.${GREEN}Configuring Caddy Reverse Proxy${NORMAL}
 6.${GREEN}Runnng the Bot${NORMAL}
 =x=x=x=x=x=x=x=x=x=x=x=x=x=x=x=x=x=x=x=x=x=x=
 69.${PURPLE}Exit${NORMAL}" && echo
@@ -90,10 +90,10 @@ read -p " Choose any Number [1-6]:" option
 
 case "$option" in
 1)
-    gdutils
+  gdutils
 	sa
 	server
-	nginx
+	caddyf
 	bot
 	;;
 2)
@@ -106,7 +106,7 @@ case "$option" in
     server
     ;;
 5)
-    caddy
+    caddyf
     ;;
 6)
     bot
