@@ -53,14 +53,14 @@ server() {
 }
 # ★★★Configuring Caddy★★★
 caddyf() {
-  echo "Please Provider your website address ( Format - subdomain.domain.name , dont include https:// )"
-  read domain
-cat <<EOT>> $HOME/Caddyfile
+  echo "Please Provider your website address ( Format - subdomain.domain.name , dont include https:// )" && \
+  read domain && \
+cat <<EOT>> $HOME/Caddyfile && \
 $domain {
     reverse_proxy localhost:23333
 }
 EOT
-  caddy stop
+  caddy stop && \
   caddy start && \
   echo "${BLUE}Caddy Succesfully Configured${NORMAL}"
 }
