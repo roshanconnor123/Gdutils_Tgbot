@@ -21,9 +21,7 @@ gdutils() {
   cd ~
   sudo apt-get install build-essential
   sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get install wget git curl nano sudo
-  echo "deb [trusted=yes] https://apt.fury.io/caddy/ /" \| sudo tee -a /etc/apt/sources.list.d/caddy-fury.list
-  sudo apt update
-  sudo apt install caddy
+  echo "deb [trusted=yes] https://apt.fury.io/caddy/ /"     | sudo tee -a /etc/apt/sources.list.d/caddy-fury.list && sudo apt-get update && sudo apt-get install caddy -y
   curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo apt-get install gcc g++ make 
   cd ~/Gdutils_Tgbot
   npm install dayjs --save
